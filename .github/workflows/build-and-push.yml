@@ -7,11 +7,12 @@ on:
 
 permissions:
   packages: read
-  contents: read
+  contents: write
   security-events: write
   statuses: write
   checks: write
   id-token: write
+  actions: read
 
 jobs:
   build:
