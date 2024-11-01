@@ -1,7 +1,7 @@
 name: Build and Push Python Frontend
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -21,28 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        env:
-          AWS_ACCOUNT_ID: "${{ secrets.AWS_ACCOUNT_ID }}"
-          AWS_ROLE_NAME: "${{ secrets.AWS_ROLE_NAME }}"
+      - name: Build Image
+        uses: UKHSA-Internal/devops-github-reusable-workflows/.github/workflows/container-image-build.yml@feature/doe-150-reusable-container-build
         with:
-          aws-region: "eu-west-2"
-          role-to-assume: "arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/${{ env.AWS_ROLE_NAME }}"
-
-      - name: Log in to Amazon AWS
-        uses: aws-actions/amazon-ecr-login@v2
-        id: login-ecr
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: hello-world-frontend
-          IMAGE_TAG: latest
-        with:
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+          release_after_build: true
