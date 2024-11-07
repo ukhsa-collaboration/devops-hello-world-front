@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build:
-    uses: UKHSA-Internal/devops-github-reusable-workflows/.github/workflows/container-image-build.yml@feature/doe-150-reusable-container-build
+    uses: ukhsa-collaboration/devops-github-reusable-workflows/.github/workflows/container-image-build.yml@feature/doe-150-reusable-container-build
     with:
       release_after_build: true
       image_name: hello-world-frontend
