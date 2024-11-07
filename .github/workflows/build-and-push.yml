@@ -20,3 +20,7 @@ jobs:
     with:
       release_after_build: true
       image_name: hello-world-frontend
+    secrets:
+      AWS_ROLE_NAME: ${{ secrets.AWS_ROLE_NAME }}
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+      
