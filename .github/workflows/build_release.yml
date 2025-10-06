@@ -1,0 +1,74 @@
+name: "Build, Test and Release"
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+env:
+  APP_NAME: ${{ vars.APP_NAME }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_NAMESPACE: ${{ vars.ECR_NAMESPACE }}
+  RUN_UNIT_TESTS: ${{ vars.RUN_UNIT_TESTS }}
+
+jobs:
+  prepare-release-tag:
+    name: Prepare release tag
+    runs-on: ohid-runners
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+    outputs:
+      release_tag: ${{ steps.release_tag.outputs.release_tag }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Bump release tag
+        id: tag_bump
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: ukhsa-collaboration/devops-github-actions/.github/actions/github-bump-tag@52f31c5544ee5204dd0e169728c595b6a402205f # v0.8.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+
+      - name: Set release tag output
+        id: release_tag
+        env:
+          NEW_TAG: ${{ steps.tag_bump.outputs.new_tag }}
+        run: |
+          if [ -n "$NEW_TAG" ]; then
+            echo "release_tag=$NEW_TAG" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_tag=" >> "$GITHUB_OUTPUT"
+          fi
+
+  container-image:
+    name: Build, Test and Release
+    needs: prepare-release-tag
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+      pull-requests: write
+    uses: ./.github/workflows/container-image-build-node-aws-ecs.yml
+    with:
+      app_name: ${{ vars.APP_NAME }}
+      service_identifier: ${{ vars.ECR_NAMESPACE }}
+      aws_region: ${{ vars.AWS_REGION }}
+      runner_labels: '["ohid-runners"]'
+      run_unit_tests: ${{ vars.RUN_UNIT_TESTS == 'true' }}
+      unit_test_command: npm run test:unit
+      push_image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      release_tag: ${{ needs.prepare-release-tag.outputs.release_tag }}
+      sign_release: true
+      run_lint: true
+      lint_command: npm run lint
+      deploy_environments: >-
+        [
+          { "name": "dev", "base_url": "https://ebug-dev.example.com", "smoke_test_url": "https://ebug-dev.example.com" },
+          { "name": "uat", "base_url": "https://ebug-uat.example.com", "smoke_test_url": "https://ebug-uat.example.com" },
+          { "name": "prd", "base_url": "https://www.example.com", "smoke_test_url": "https://www.example.com" }
+        ]
+    secrets: inherit
