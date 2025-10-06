@@ -5,6 +5,11 @@ ARG NEXT_PUBLIC_API_BASE_URL=PLACEHOLDER_NEXT_PUBLIC_API_BASE_URL
 
 FROM node:slim AS base
 
+# Because NEXT_PUBLIC values get baked in at build time, we set any that need to be accessed 
+# to placeholder values so that the replace-variables.sh script can replace the placeholder value with
+# the real value as the container starts up. 
+ENV NEXT_PUBLIC_API_BASE_URL=PLACEHOLDER_NEXT_PUBLIC_API_BASE_URL
+
 WORKDIR /app
 
 COPY ./start /app/start
