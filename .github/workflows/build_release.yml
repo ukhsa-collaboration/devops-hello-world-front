@@ -14,7 +14,7 @@ env:
 jobs:
   prepare-release-tag:
     name: Prepare release tag
-    runs-on: ohid-runners
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
@@ -57,7 +57,6 @@ jobs:
       app_name: ${{ vars.APP_NAME }}
       service_identifier: ${{ vars.ECR_NAMESPACE }}
       aws_region: ${{ vars.AWS_REGION }}
-      runner_labels: '["ohid-runners"]'
       run_unit_tests: ${{ vars.RUN_UNIT_TESTS == 'true' }}
       unit_test_command: npm run test:unit
       push_image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
