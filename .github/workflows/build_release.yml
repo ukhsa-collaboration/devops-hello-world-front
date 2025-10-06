@@ -66,8 +66,6 @@ jobs:
       lint_command: npm run lint
       deploy_environments: >-
         [
-          { "name": "dev", "base_url": "https://ebug-dev.example.com", "smoke_test_url": "https://ebug-dev.example.com" },
-          { "name": "uat", "base_url": "https://ebug-uat.example.com", "smoke_test_url": "https://ebug-uat.example.com" },
-          { "name": "prd", "base_url": "https://www.example.com", "smoke_test_url": "https://www.example.com" }
+          { "name": "dev", "base_url": "https://example.com", "smoke_test_url": "https://example.com" }
         ]
     secrets: inherit
