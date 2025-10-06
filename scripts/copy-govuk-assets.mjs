@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
-const fsp = require("fs/promises");
-const path = require("path");
+import { existsSync } from "node:fs";
+import { cp, copyFile, mkdir, rm } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const projectRoot = path.resolve(__dirname, "..");
 const srcRoot = path.join(
@@ -14,7 +18,7 @@ const srcRoot = path.join(
 );
 const destRoot = path.join(projectRoot, "public", "assets");
 
-if (!fs.existsSync(srcRoot)) {
+if (!existsSync(srcRoot)) {
   console.warn(
     "[copy-govuk-assets] govuk-frontend not installed, skipping asset copy"
   );
@@ -22,28 +26,27 @@ if (!fs.existsSync(srcRoot)) {
 }
 
 async function ensureDir(dirPath) {
-  await fsp.mkdir(dirPath, { recursive: true });
+  await mkdir(dirPath, { recursive: true });
 }
 
-async function copyFile(src, dest) {
+async function copyFileSafe(src, dest) {
   await ensureDir(path.dirname(dest));
-  await fsp.copyFile(src, dest);
+  await copyFile(src, dest);
 }
 
 async function copyDirectory(src, dest) {
   await ensureDir(path.dirname(dest));
-  // Remove the destination directory first to avoid stale assets
-  await fsp.rm(dest, { recursive: true, force: true });
-  await fsp.cp(src, dest, { recursive: true });
+  await rm(dest, { recursive: true, force: true });
+  await cp(src, dest, { recursive: true });
 }
 
 async function main() {
   const tasks = [
-    copyFile(
+    copyFileSafe(
       path.join(srcRoot, "govuk-frontend.min.css"),
       path.join(destRoot, "styles", "govuk-frontend.min.css")
     ),
-    copyFile(
+    copyFileSafe(
       path.join(srcRoot, "assets", "manifest.json"),
       path.join(destRoot, "manifest.json")
     ),
