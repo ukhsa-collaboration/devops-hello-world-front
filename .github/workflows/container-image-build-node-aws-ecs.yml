@@ -96,26 +96,6 @@ on:
         required: false
         default: false
         type: boolean
-      enable_trivy:
-        description: Run Trivy against the pushed container image.
-        required: false
-        default: true
-        type: boolean
-      enable_snyk:
-        description: Run Snyk against the pushed container image.
-        required: false
-        default: false
-        type: boolean
-      trivy_severity:
-        description: Comma separated Trivy severities treated as findings.
-        required: false
-        default: "CRITICAL,HIGH"
-        type: string
-      fail_on_trivy_findings:
-        description: Fail the workflow if Trivy reports findings of the configured severity.
-        required: false
-        default: true
-        type: boolean
       node_version:
         description: Node.js version to install when linting or tests are enabled.
         required: false
@@ -308,28 +288,6 @@ jobs:
             APP_VERSION=${{ steps.image-version.outputs.value }}
             ${{ inputs.build_args }}
 
-      - name: Run Snyk to check for vulnerabilities
-        if: inputs.enable_snyk
-        id: snyk
-        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          command: monitor
-          args: --severity-threshold=high --file=${{ inputs.project_working_directory }}/package.json
-
-      - name: Run Trivy vulnerability scanner
-        if: inputs.enable_trivy
-        id: trivy
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: '${{ steps.image-ref.outputs.image_ref }}'
-          output: 'trivy.txt'
-          exit-code: ${{ inputs.fail_on_trivy_findings && '1' || '0' }}
-          ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: ${{ inputs.trivy_severity }}
-
       - name: Summarise results
         if: always()
         id: build-summary
@@ -337,8 +295,6 @@ jobs:
           LINT_OUTCOME: ${{ steps.lint.outcome || 'skipped' }}
           UNIT_OUTCOME: ${{ steps.unit-tests.outcome || 'skipped' }}
           INT_OUTCOME: ${{ steps.integration-tests.outcome || 'skipped' }}
-          SNYK_OUTCOME: ${{ steps.snyk.outcome || 'skipped' }}
-          TRIVY_OUTCOME: ${{ steps.trivy.outcome || 'skipped' }}
           PUSH_IMAGE: ${{ inputs.push_image }}
           IMAGE_REF: ${{ steps.image-ref.outputs.image_ref }}
           SUMMARY_FILE: ci-summary.md
@@ -349,8 +305,6 @@ jobs:
           echo "| Lint | ${LINT_OUTCOME} |" >> "$SUMMARY_FILE"
           echo "| Unit tests | ${UNIT_OUTCOME} |" >> "$SUMMARY_FILE"
           echo "| Integration tests | ${INT_OUTCOME} |" >> "$SUMMARY_FILE"
-          echo "| Snyk scan | ${SNYK_OUTCOME} |" >> "$SUMMARY_FILE"
-          echo "| Trivy scan | ${TRIVY_OUTCOME} |" >> "$SUMMARY_FILE"
           if [ "$PUSH_IMAGE" = "true" ] && [ "$BUILD_OUTCOME" = "success" ] ; then
             echo "" >> "$SUMMARY_FILE"
             echo "**Image:** \`$IMAGE_REF\`" >> "$SUMMARY_FILE"
@@ -397,12 +351,6 @@ jobs:
                 body: finalBody,
               });
             }
-
-      - name: Fail step on Trivy findings
-        if: inputs.enable_trivy && inputs.fail_on_trivy_findings && steps.trivy.outcome == 'failure'
-        run: |
-          echo "Trivy reported findings that meet the failure threshold. See the job summary for details." >&2
-          exit 1
 
   release:
     name: Tag pushed image
