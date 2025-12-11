@@ -16,7 +16,7 @@
     "test:integration": "vitest run tests/integration/front-page.test.ts"
   },
   "dependencies": {
-    "govuk-frontend": "^5.12.0",
+    "govuk-frontend": "^5.13.0",
     "next": "15.5.4",
     "react-dom": "19.1.1",
     "react": "19.2.0"
