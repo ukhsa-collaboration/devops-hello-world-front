@@ -1,4 +1,4 @@
-FROM node:slim AS base
+FROM node:26.3.0-trixie-slim AS base
 
 # Because NEXT_PUBLIC values get baked in at build time, we set any that need to be accessed 
 # to placeholder values so that the replace-variables.sh script can replace the placeholder value with
@@ -29,7 +29,7 @@ FROM dev AS build
 
 RUN npm run build
 
-FROM node:slim AS production
+FROM node:26.3.0-trixie-slim AS production
 
 COPY ./start /app/start
 RUN chmod +x /app/start/docker-entrypoint.sh /app/start/replace-variables.sh 
